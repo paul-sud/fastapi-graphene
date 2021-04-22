@@ -22,7 +22,7 @@ class Query(graphene.ObjectType):
         return "Hello " + name
 
     def resolve_goodbye(parent, info):
-        return 'See ya!'
+        return "See ya!"
 
     def resolve_people(parent, info):
         # fetch actual PersonModels here
