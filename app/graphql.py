@@ -1,16 +1,9 @@
 import uuid
 
 import graphene
-import pydantic
-from fastapi import FastAPI
 from graphene_pydantic import PydanticObjectType
-from starlette.graphql import GraphQLApp
 
-
-class PersonModel(pydantic.BaseModel):
-    uuid: uuid.UUID
-    first_name: str
-    last_name: str
+from .models import PersonModel
 
 
 class Person(PydanticObjectType):
@@ -34,7 +27,3 @@ class Query(graphene.ObjectType):
     def resolve_people(parent, info):
         # fetch actual PersonModels here
         return [PersonModel(uuid=uuid.uuid4(), first_name="Beth", last_name="Smith")]
-
-
-app = FastAPI()
-app.add_route("/", GraphQLApp(schema=graphene.Schema(query=Query)))
