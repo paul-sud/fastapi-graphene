@@ -27,6 +27,8 @@ repos:
     rev: v0.812
     hooks:
       - id: mypy
+        additional_dependencies:
+          - strawberry-graphql
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.2.3

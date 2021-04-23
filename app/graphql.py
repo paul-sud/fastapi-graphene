@@ -3,7 +3,7 @@ import uuid
 import graphene
 from graphene_pydantic import PydanticObjectType
 
-from .models import PersonModel, FileModel, ExperimentModel
+from .models import ExperimentModel, FileModel, PersonModel
 
 
 class Person(PydanticObjectType):
@@ -17,12 +17,15 @@ class File(PydanticObjectType):
     class Meta:
         model = FileModel
 
+
 class Experiment(PydanticObjectType):
     class Meta:
         model = ExperimentModel
 
     def resolve_files(parent, info):
-        return [FileModel(uuid=uuid.uuid4(), s3_uri="s3://foo/bar") for _ in parent.files]
+        return [
+            FileModel(uuid=uuid.uuid4(), s3_uri="s3://foo/bar") for _ in parent.files
+        ]
 
 
 class Query(graphene.ObjectType):
@@ -33,7 +36,7 @@ class Query(graphene.ObjectType):
 
     def resolve_hello(parent, info, name):
         return "Hello " + name
-    
+
     def resolve_goodbye(parent, info):
         return "See ya!"
 
