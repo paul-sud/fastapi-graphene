@@ -1,1 +1,7 @@
-strawberry-graphql[debug-server]
+strawberry-graphql==0.57.2
+databases[sqlite]==0.4.3
+# sqlalchemy version set by databases
+sqlalchemy
+# starlette version set by strawberry
+starlette
+uvicorn==0.13.4
