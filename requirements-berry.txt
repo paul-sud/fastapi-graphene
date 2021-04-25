@@ -4,4 +4,4 @@ databases[sqlite]==0.4.3
 sqlalchemy
 # starlette version set by strawberry
 starlette
-uvicorn==0.13.4
+uvicorn[standard]==0.13.4

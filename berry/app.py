@@ -10,7 +10,7 @@ from .settings import DATABASE_URL, DEBUG, GRAPHQL_ROUTE
 
 async def on_startup():
     # TODO: should use alembic or something
-    engine = sqlalchemy.create_engine(DATABASE_URL)
+    engine = sqlalchemy.create_engine(str(DATABASE_URL), echo=True)
     metadata.create_all(engine)
     await database.connect()
 
@@ -19,7 +19,7 @@ async def on_shutdown():
     await database.disconnect()
 
 
-app = Starlette(debug=True, on_startup=[on_startup], on_shutdown=[on_shutdown])
+app = Starlette(debug=DEBUG, on_startup=[on_startup], on_shutdown=[on_shutdown])
 app.add_middleware(
     CORSMiddleware, allow_headers=["*"], allow_origins=["*"], allow_methods=["*"]
 )
