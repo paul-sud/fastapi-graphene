@@ -1,7 +1,7 @@
-fastapi==0.63.0
-graphene==3.0.b7
-graphene-pydantic==0.2.0
-# pydantica and starlette already pinned by fastapi
-pydantic
+strawberry-graphql[pydantic]==0.57.2
+databases[sqlite]==0.4.3
+# sqlalchemy version set by databases
+sqlalchemy
+# starlette version set by strawberry
 starlette
-uvicorn==0.13.4
+uvicorn[standard]==0.13.4
