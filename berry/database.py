@@ -19,4 +19,12 @@ files = sqlalchemy.Table(
     sqlalchemy.Column("data", sqlalchemy.JSON),
 )
 
+
+parents = sqlalchemy.Table(
+    "parents",
+    metadata,
+    sqlalchemy.Column("uuid", sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column("data", sqlalchemy.JSON),
+)
+
 database = Database(DATABASE_URL)

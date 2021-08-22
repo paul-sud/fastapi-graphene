@@ -6,3 +6,5 @@ venv
 .python-version
 .tox
 .env
+.mypy_cache
+test.db

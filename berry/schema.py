@@ -1,9 +1,10 @@
-from typing import Optional
+from typing import Optional, List
 
 import strawberry
+from strawberry.extensions.tracing import ApolloTracingExtension
 
-from .database import database, experiments, files
-from .models import UserModel
+from .database import database, experiments, files, parents
+from .models import NodeModel, UserModel, PageInfoModel, ParentModel, ChildModel, ChildConnectionModel, ChildEdgeModel
 
 
 def get_files() -> list["File"]:
@@ -20,6 +21,7 @@ async def get_file(uuid: int) -> "File":
 class File:
     s3_uri: str
     uuid: int
+    file_format: Optional[str] = None
 
 
 @strawberry.input
@@ -50,14 +52,9 @@ class User:
     """
     Generate schema from Pydantic model.
     """
-
-    pass
-
-    # This doesn't work!
-    # https://github.com/strawberry-graphql/strawberry/issues/894
-    # @strawberry.field
-    # def full_name(self) -> str:
-    #     return f"{self.first_name} {self.last_name}"
+    @strawberry.field
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
 
 
 @strawberry.experimental.pydantic.input(
@@ -69,6 +66,58 @@ class UserInput:
     """
 
     pass
+
+
+@strawberry.experimental.pydantic.type(
+    model=NodeModel,
+    fields=["id"],
+    is_interface=True,
+)
+class Node:
+    pass
+
+
+@strawberry.experimental.pydantic.type(
+    model=PageInfoModel,
+    fields=["has_next_page", "has_previous_page", "start_cursor", "end_cursor"]
+)
+class PageInfo:
+    pass
+
+
+@strawberry.experimental.pydantic.type(
+    model=ChildConnectionModel, fields=["edges", "page_info"]
+)
+class ChildConnection:
+    pass
+
+
+@strawberry.experimental.pydantic.type(
+    model=ChildEdgeModel, fields=["node", "cursor"]
+)
+class ChildEdge:
+    pass
+
+
+@strawberry.experimental.pydantic.type(
+    model=ChildModel, fields=["name", "id"]
+)
+class Child:
+    pass
+
+
+@strawberry.experimental.pydantic.type(
+    model=ParentModel, fields=[
+        "name", "id"
+    ]
+)
+class Parent:
+    """
+    Need to specify children here since resolver must take arguments per Relay spec.
+    """
+    @strawberry.field
+    def children(self, first: strawberry.ID, after: int) -> List[ChildConnection]:
+        return self.children
 
 
 @strawberry.type
@@ -91,6 +140,12 @@ class Query:
     @strawberry.field
     def get_user(self) -> User:
         return User(id=1, first_name="Mary", last_name="Yram", friends=[1, 2, 3])
+
+    @strawberry.field
+    async def get_parents(self) -> List[Parents]:
+        query = parents.select()
+        rows = await database.fetch_all(query=query)
+        return [Parent(id=row.uuid, **row.data) for row in rows]
 
 
 @strawberry.type
@@ -117,5 +172,16 @@ class Mutation:
         )
         return result
 
+    @strawberry.mutation
+    async def create_parent(self, parent_input: ParentInput) -> int:
+        parent_input.to_pydantic()
+        result = await database.execute(
+            query=parents.insert(),
+            values={
+                "data": vars(parent_input)
+            },
+        )
+        return result
 
-schema = strawberry.Schema(query=Query, mutation=Mutation)
+
+schema = strawberry.Schema(query=Query, mutation=Mutation, extensions=[ApolloTracingExtension])
