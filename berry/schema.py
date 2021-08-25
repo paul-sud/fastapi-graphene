@@ -1,10 +1,18 @@
-from typing import Optional, List
+from typing import List, Optional
 
 import strawberry
 from strawberry.extensions.tracing import ApolloTracingExtension
 
 from .database import database, experiments, files, parents
-from .models import NodeModel, UserModel, PageInfoModel, ParentModel, ChildModel, ChildConnectionModel, ChildEdgeModel
+from .models import (
+    ChildConnectionModel,
+    ChildEdgeModel,
+    ChildModel,
+    NodeModel,
+    PageInfoModel,
+    ParentModel,
+    UserModel,
+)
 
 
 def get_files() -> list["File"]:
@@ -52,6 +60,7 @@ class User:
     """
     Generate schema from Pydantic model.
     """
+
     @strawberry.field
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
@@ -69,9 +78,7 @@ class UserInput:
 
 
 @strawberry.experimental.pydantic.type(
-    model=NodeModel,
-    fields=["id"],
-    is_interface=True,
+    model=NodeModel, fields=["id"], is_interface=True
 )
 class Node:
     pass
@@ -79,7 +86,7 @@ class Node:
 
 @strawberry.experimental.pydantic.type(
     model=PageInfoModel,
-    fields=["has_next_page", "has_previous_page", "start_cursor", "end_cursor"]
+    fields=["has_next_page", "has_previous_page", "start_cursor", "end_cursor"],
 )
 class PageInfo:
     pass
@@ -92,29 +99,22 @@ class ChildConnection:
     pass
 
 
-@strawberry.experimental.pydantic.type(
-    model=ChildEdgeModel, fields=["node", "cursor"]
-)
+@strawberry.experimental.pydantic.type(model=ChildEdgeModel, fields=["node", "cursor"])
 class ChildEdge:
     pass
 
 
-@strawberry.experimental.pydantic.type(
-    model=ChildModel, fields=["name", "id"]
-)
+@strawberry.experimental.pydantic.type(model=ChildModel, fields=["name", "id"])
 class Child:
     pass
 
 
-@strawberry.experimental.pydantic.type(
-    model=ParentModel, fields=[
-        "name", "id"
-    ]
-)
+@strawberry.experimental.pydantic.type(model=ParentModel, fields=["name", "id"])
 class Parent:
     """
     Need to specify children here since resolver must take arguments per Relay spec.
     """
+
     @strawberry.field
     def children(self, first: strawberry.ID, after: int) -> List[ChildConnection]:
         return self.children
@@ -176,12 +176,11 @@ class Mutation:
     async def create_parent(self, parent_input: ParentInput) -> int:
         parent_input.to_pydantic()
         result = await database.execute(
-            query=parents.insert(),
-            values={
-                "data": vars(parent_input)
-            },
+            query=parents.insert(), values={"data": vars(parent_input)}
         )
         return result
 
 
-schema = strawberry.Schema(query=Query, mutation=Mutation, extensions=[ApolloTracingExtension])
+schema = strawberry.Schema(
+    query=Query, mutation=Mutation, extensions=[ApolloTracingExtension]
+)
