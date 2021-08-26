@@ -156,7 +156,7 @@ class ChildEdge:
         """
         Identical code to other resolvers
         """
-        data = ChildModel.construct(**database[f"parents:{id}"])
+        data = ChildModel.construct(**database[f"children:{self.child_id}"])
         return Child.from_pydantic(data)
 
 
@@ -191,11 +191,23 @@ class Parent(Node):
     Need to specify children here since resolver must take arguments per Relay spec.
     """
 
+    child_ids: strawberry.Private[List[str]]
+
     @strawberry.field
     def children(self, first: Optional[int], after: Optional[str]) -> ChildConnection:
+        start_offset = 0
+        if after is not None:
+            start_offset = get_offset_from_cursor(after) + 1
+        start_cursor = get_cursor_from_offset(start_offset)
+        end_offset = len(self.child_ids) - 1
+        if first is not None:
+            end_offset = start_offset + first - 1
+        end_cursor = get_cursor_from_offset(end_offset)
         return ChildConnection(
             child_ids=self.child_ids,
             page_info=PageInfo(
+                start_cursor=start_cursor,
+                end_cursor=end_cursor,
                 has_next_page=has_next_page(self.child_ids, first=first, after=after),
                 has_previous_page=has_previous_page(
                     self.child_ids, first=first, after=after
@@ -334,11 +346,7 @@ class Mutation:
                 print(f"Created {guid}")
                 node_ids_to_guids[id(node)] = guid
         parent = ParentModel.parse_obj(database[guid])
-        # The usual resolver chain is not called. When calling `from_pydantic` the
-        # `children` field is missing in model, However it is a graphql good practice
-        # to return the new data created by a mutation so you don't need to query again
-        # So we recurse
-        return Parent.from_pydantic(parent, extra={"children": [{"name": "john"}]})
+        return Parent(id=guid, **parent.dict())
 
 
 def depth_first_search(
@@ -417,25 +425,27 @@ query = """
 schema.execute_sync(query, validation_rules=validation_rules)
 
 
-# This mutation should first create a child, then create a parent linked to the child
-# by the child's generated ID. Children should be stored in the DB as an array of IDs,
-# without the ChildConnection indirection
-# query = """
-#     mutation {
-#         createParent(
-#             input: {
-#                 name: "Suzy"
-#                 children: [
-#                     {
-#                         name: "Bupkiss"
-#                 }]
-#             }
-#         ) {
-#             name
-#         }
-#     }
-# """
-# schema.execute_sync(query)
+# Similar to above except should link to an existing child also
+query = """
+    mutation {
+        createParent(
+            input: {
+                name: "Mary"
+                children: [
+                    {
+                        name: "Jonny"
+                    },
+                    {
+                        id: "1"
+                    },
+                ]
+            }
+        ) {
+            name
+        }
+    }
+"""
+schema.execute_sync(query)
 
 
 # query = '{ node( id: "parents:foo" ) { name } }'

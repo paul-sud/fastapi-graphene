@@ -1,4 +1,6 @@
-strawberry-graphql[opentelemetry,pydantic]==0.72.1
+# strawberry-graphql[opentelemetry,pydantic]==0.72.1
+# temporarily point at my fork until PR merged
+git+https://github.com/paul-sud/strawberry.git@fix-private-field-for-pydantic-type#egg=strawberry-graphql
 databases[sqlite]==0.4.3
 # sqlalchemy version set by databases
 sqlalchemy
